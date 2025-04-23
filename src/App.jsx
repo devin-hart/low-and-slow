@@ -31,7 +31,9 @@ function App() {
   return (
     <div className="page">
       <header className="header">
-        <h1>Low & Slow Recipe Search</h1>
+        <h1><img src="https://res.cloudinary.com/dlk1wqemy/image/upload/v1745441733/lw-logo_mebmwu.webp" alt="low and slow logo" srcset="" />
+            <span>Low & Slow</span>
+            </h1>
         <form onSubmit={handleSearch} className="search-form">
           <input
             type="text"
