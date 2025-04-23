@@ -1,54 +1,68 @@
 import { useState } from "react";
+import RecipeCard from "./components/RecipeCard";
+import SkeletonCard from "./components/SkeletonCard";
+import RecipeModal from "./components/RecipeModal";
+import "./index.css";
 
 function App() {
   const [query, setQuery] = useState("");
   const [recipes, setRecipes] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [modalUrl, setModalUrl] = useState(null);
 
   const handleSearch = async (e) => {
     e.preventDefault();
-    if (!query) return;
+    if (!query.trim()) return;
 
-    const searchTerm = encodeURIComponent(query.trim());
-    const response = await fetch(`/api/search?term=${searchTerm}`);
-    const data = await response.json();
+    setLoading(true);
+    setRecipes([]);
 
-    console.log(data);
-    setRecipes(data);
+    try {
+      const res = await fetch(`/api/search?term=${encodeURIComponent(query)}`);
+      const data = await res.json();
+      setRecipes(data);
+    } catch (err) {
+      console.error("Search failed:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="p-6 max-w-md mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Low & Slow Recipe Search</h1>
+    <div className="page">
+      <header className="header">
+        <h1>Low & Slow Recipe Search</h1>
+        <form onSubmit={handleSearch} className="search-form">
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search for a pellet grill recipe..."
+            className="search-input"
+          />
+          <button type="submit" className="search-button">
+            Search
+          </button>
+        </form>
+      </header>
 
-      <form onSubmit={handleSearch} className="flex gap-2 mb-4">
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search for a pellet grill recipe..."
-          className="flex-1 p-2 border border-gray-300 rounded"
-        />
-        <button
-          type="submit"
-          className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800"
-        >
-          Search
-        </button>
-      </form>
+      <main className="results-wrap">
+        <div className="card-grid">
+          {loading
+            ? Array.from({ length: 12 }).map((_, i) => <SkeletonCard key={i} />)
+            : recipes.map((recipe, i) => (
+                <RecipeCard
+                  key={i}
+                  {...recipe}
+                  onClick={() => setModalUrl(recipe.href)}
+                />
+              ))}
+        </div>
+      </main>
 
-      <div className="space-y-4">
-        {recipes.map((recipe, index) => (
-          <a
-            key={index}
-            href={recipe.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block p-4 border border-gray-200 rounded hover:bg-gray-50"
-          >
-            {recipe.title}
-          </a>
-        ))}
-      </div>
+      {modalUrl && (
+        <RecipeModal url={modalUrl} onClose={() => setModalUrl(null)} />
+      )}
     </div>
   );
 }
